@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
-import { IEvent } from "@/database";
+import { Event, IEvent } from "@/database";
 import Image from "next/image";
 import BookEvent from "@/components/BookEvent";
 import EventCard from "@/components/EventCard";
 import { cacheLife } from "next/cache";
 import { getSimilarEventsBySlug } from "@/lib/actions/event.action";
+import connectDB from "@/lib/mongodb";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -36,42 +37,27 @@ const EventTags = ({ tags }: { tags: string[] }) => (
   </div>
 );
 
-const EventDetails = async ({ params }: { params: Promise<string> }) => {
+const EventDetails = async ({ params }: { params: { slug: string } }) => {
   "use cache";
   cacheLife("hours");
-  const slug = await params;
 
-  let event;
-  try {
-    const request = await fetch(`${BASE_URL}/api/events/${slug}`, {
-      next: { revalidate: 60 },
-    });
+  await connectDB();
 
-    if (!request.ok) {
-      if (request.status === 404) {
-        return notFound();
-      }
-      throw new Error(`Failed to fetch event: ${request.statusText}`);
-    }
+  const event = await Event.findOne({ slug: params.slug }).lean();
 
-    const response = await request.json();
-    event = response.event;
+  if (!event) return notFound();
 
-    if (!event) {
-      return notFound();
-    }
-  } catch (error) {
-    console.error("Error fetching event:", error);
-    return notFound();
-  }
+  const formattedEvent = {
+    ...event,
+    _id: event._id.toString(),
+  };
 
-  const { description, image, overview, date, time, location, mode, agenda, audience, tags, organizer } = event;
+  const similarEvents = await getSimilarEventsBySlug(params.slug);
 
-  if (!description) return notFound();
+  const { description, image, overview, date, time, location, mode, agenda, audience, tags, organizer } =
+    formattedEvent;
 
   const bookings = 10;
-
-  const similarEvents: IEvent[] = await getSimilarEventsBySlug(slug);
 
   return (
     <section id="event">
