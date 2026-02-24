@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
-import { IEvent } from "@/database";
+import { Event, IEvent } from "@/database";
 import Image from "next/image";
 import BookEvent from "@/components/BookEvent";
 import EventCard from "@/components/EventCard";
 import { cacheLife } from "next/cache";
 import { getSimilarEventsBySlug } from "@/lib/actions/event.action";
+import connectDB from "@/lib/mongodb";
 
 const EventDetailItem = ({ icon, alt, label }: { icon: string; alt: string; label: string }) => (
   <div className="flex-row-gap-2 items-center">
@@ -39,27 +40,11 @@ const EventDetails = async ({ params }: { params: Promise<string> }) => {
   cacheLife("hours");
   const slug = await params;
 
-  let event;
-  try {
-    const request = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/events/${slug}`, {
-      next: { revalidate: 60 },
-    });
+  await connectDB();
 
-    if (!request.ok) {
-      if (request.status === 404) {
-        return notFound();
-      }
-      throw new Error(`Failed to fetch event: ${request.statusText}`);
-    }
+  const event = await Event.findOne({ slug: slug }).lean();
 
-    const response = await request.json();
-    event = response.event;
-
-    if (!event) {
-      return notFound();
-    }
-  } catch (error) {
-    console.error("Error fetching event:", error);
+  if (!event) {
     return notFound();
   }
 
@@ -118,7 +103,7 @@ const EventDetails = async ({ params }: { params: Promise<string> }) => {
               <p className="text-sm">Be the first to book your spot!</p>
             )}
 
-            <BookEvent eventId={event._id} slug={event.slug} />
+            <BookEvent eventId={event._id.toString()} slug={event.slug} />
           </div>
         </aside>
       </div>

@@ -25,10 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${schibstedGrotesk.variable} ${martianMono.variable} antialiased min-h-screen`}
-      >
+    <html lang="en" className="scroll-smooth">
+      <body className={`${schibstedGrotesk.variable} ${martianMono.variable} antialiased min-h-screen`}>
         <Navbar />
 
         <div className="absolute inset-0 top-0 z-[-1] min-h-screen">

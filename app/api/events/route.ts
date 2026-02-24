@@ -3,6 +3,7 @@ import { v2 as cloudinary } from "cloudinary";
 
 import { Event } from "@/database";
 import connectDB from "@/lib/mongodb";
+import { revalidatePath } from "next/cache";
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,6 +59,9 @@ export async function POST(req: NextRequest) {
     event.image = (uploadResult as { secure_url: string }).secure_url;
 
     const createdEvent = await Event.create({ ...event, tags, agenda });
+
+    revalidatePath("/");
+    revalidatePath("/events");
 
     return NextResponse.json({ message: "Event Created Successfully", event: createdEvent }, { status: 201 });
   } catch (error) {
