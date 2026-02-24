@@ -47,9 +47,8 @@ const CreateEventPage = () => {
 
       setStatus("success");
 
-      setTimeout(() => {
-        router.push("/events");
-      }, 1500);
+      router.push("/events");
+      router.refresh();
     } catch (err) {
       console.error(err);
       setStatus("error");

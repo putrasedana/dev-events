@@ -64,8 +64,18 @@ export async function POST(req: NextRequest) {
     revalidatePath("/events");
 
     return NextResponse.json({ message: "Event Created Successfully", event: createdEvent }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating event:", error);
+
+    if (error.code === 11000) {
+      return NextResponse.json(
+        {
+          message: "Slug already exists. Please use a different title.",
+        },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json(
       {
         message: "Event Creation Failed",
